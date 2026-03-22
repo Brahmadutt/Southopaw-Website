@@ -327,20 +327,18 @@ const renderServices = () => {
   const container = document.querySelector("#service-list");
   if (!container) return;
 
-  const displayedServices = showAllServices ? services : services.slice(0, 4);
+  const displayedServices = showAllServices ? services : services.slice(0, 6);
 
   container.innerHTML = displayedServices
     .map(
       (item, index) => `
-        <article class="service-item card-pop" style="--card-delay:${index * 110}ms;">
-          <div class="service-item-media">
+        <article class="portfolio-card service-card card-pop" style="--card-delay:${index * 110}ms;">
+          <div class="portfolio-image">
             <img src="${item.image}" alt="${item.alt}" loading="lazy" />
+            <div class="service-badge-overlay">0${index + 1}</div>
           </div>
-          <div class="service-item-content">
-            <div class="service-item-header">
-              <div class="service-item-badge">0${index + 1}</div>
-              <h3>${item.title}</h3>
-            </div>
+          <div class="portfolio-content">
+            <h3>${item.title}</h3>
             <p>${item.description}</p>
             <ul class="service-highlights">
               ${item.highlights.map((highlight) => `<li>${highlight}</li>`).join("")}
