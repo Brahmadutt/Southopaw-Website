@@ -36,14 +36,16 @@ const team = [
     image: "assets/rakesh.png",
     initials: "RK",
     accent: "linear-gradient(135deg, #4038ff, #8f20ff)",
+    linkedin: "https://www.linkedin.com/in/rakesh-kurup-4a038346?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app"
   },
   {
     name: "Gurudutt S",
-    role: "Co-Founder",
+    role: "Co-Founder, CEO",
     bio: "Drives creative systems, brand storytelling, and campaign direction across performance and content ecosystems.",
     image: "assets/guru.png",
     initials: "GS",
     accent: "linear-gradient(135deg, #8f20ff, #ff1ba8)",
+    linkedin: "https://www.linkedin.com/in/gurudutt-s-a3264516?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app"
   },
   {
     name: "Priyanka Purushothaman",
@@ -52,6 +54,7 @@ const team = [
     image: "assets/kavitha.png",
     initials: "PP",
     accent: "linear-gradient(135deg, #ff1ba8, #ff4061)",
+    linkedin: "https://www.linkedin.com/in/priyanka-purushothaman-a24764161?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=ios_app"
   },
 ];
 
@@ -219,7 +222,16 @@ const renderTeam = () => {
           <div class="team-avatar" style="background:${person.accent};">
             ${person.image ? `<img src="${person.image}" alt="${person.name}" loading="lazy" />` : person.initials}
           </div>
-          <span class="team-role">${person.role}</span>
+          <div class="team-header-row">
+            <span class="team-role">${person.role}</span>
+            ${person.linkedin ? `
+              <a href="${person.linkedin}" target="_blank" rel="noopener noreferrer" class="team-linkedin" aria-label="${person.name} LinkedIn Profile">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                </svg>
+              </a>
+            ` : ''}
+          </div>
           <h3>${person.name}</h3>
           <p>${person.bio}</p>
         </article>
@@ -348,7 +360,7 @@ const renderServices = () => {
 const setupServicesToggle = () => {
   const btn = document.querySelector("#view-all-services-btn");
   if (!btn) return;
-  
+
   btn.addEventListener("click", () => {
     showAllServices = !showAllServices;
     renderServices();
@@ -394,14 +406,14 @@ const setupCardPopAnimations = () => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add("card-pop-visible");
-        } else {
-          entry.target.classList.remove("card-pop-visible");
+          // Once visible, we can stop observing if we don't want it to hide again
+          // observer.unobserve(entry.target); 
         }
       });
     },
     {
-      threshold: 0.2,
-      rootMargin: "0px 0px -40px 0px",
+      threshold: 0.15,
+      rootMargin: "0px 0px -50px 0px",
     }
   );
 
@@ -417,14 +429,12 @@ const revealOnScroll = () => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add("is-visible");
-        } else {
-          entry.target.classList.remove("is-visible");
         }
       });
     },
     {
-      threshold: 0.16,
-      rootMargin: "0px 0px -40px 0px",
+      threshold: 0.1,
+      rootMargin: "0px 0px -20px 0px",
     }
   );
 
@@ -478,13 +488,70 @@ const setupForms = () => {
   const formNote = document.querySelector("#form-note");
 
   if (contactForm && formNote) {
-    contactForm.addEventListener("submit", (event) => {
+    contactForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const name = new FormData(contactForm).get("name")?.toString().trim() || "there";
-      formNote.textContent = `Thanks, ${name}. Southpaw Media has your message and will be in touch soon.`;
-      contactForm.reset();
+      const submitBtn = contactForm.querySelector(".contact-submit");
+      const originalBtnText = submitBtn.textContent;
+      
+      const formData = new FormData(contactForm);
+      const name = formData.get("name")?.toString().trim() || "there";
+
+      submitBtn.textContent = "Sending...";
+      submitBtn.disabled = true;
+
+      try {
+        const response = await fetch(contactForm.action, {
+          method: contactForm.method,
+          body: formData,
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          formNote.textContent = `Thanks, ${name}. Southpaw Media has your message and will be in touch soon.`;
+          contactForm.reset();
+        } else {
+          const data = await response.json();
+          if (Object.hasOwn(data, 'errors')) {
+            formNote.textContent = data["errors"].map(error => error["message"]).join(", ");
+          } else {
+            formNote.textContent = "Oops! There was a problem submitting your form. Please try again later.";
+          }
+        }
+      } catch (error) {
+        formNote.textContent = "Oops! Communication error. Please check your connection and try again.";
+      } finally {
+        submitBtn.textContent = originalBtnText;
+        submitBtn.disabled = false;
+      }
     });
   }
+};
+
+const setupMobileMenu = () => {
+  const menuBtn = document.querySelector(".mobile-menu-btn");
+  const nav = document.querySelector(".site-nav");
+  const navLinks = document.querySelectorAll(".site-nav a");
+
+  if (!menuBtn || !nav) return;
+
+  const toggleMenu = () => {
+    const isOpen = menuBtn.classList.toggle("is-active");
+    nav.classList.toggle("is-open", isOpen);
+    menuBtn.setAttribute("aria-expanded", isOpen);
+    document.body.style.overflow = isOpen ? "hidden" : "";
+  };
+
+  menuBtn.addEventListener("click", toggleMenu);
+
+  navLinks.forEach(link => {
+    link.addEventListener("click", () => {
+      if (nav.classList.contains("is-open")) {
+        toggleMenu();
+      }
+    });
+  });
 };
 
 renderMilestones();
@@ -500,5 +567,6 @@ revealOnScroll();
 setupCardPopAnimations();
 setupActiveNavigation();
 setupForms();
+setupMobileMenu();
 
 window.addEventListener("resize", renderBackgroundParticles);
